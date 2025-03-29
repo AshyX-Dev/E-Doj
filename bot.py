@@ -70,7 +70,6 @@ async def onMessages(msg: Message):
                 await manager.setToken(msg.from_user.id, inc.phone, acctoken)
                 await manager.clearIncludes(msg.from_user.id)
                 await bot.reply_to(msg, "[ 🍡 ] - توکن با موفقیت به لیست اد شد !\n[ ♦ ] - برای دیدن شماره ها کلمه 'پنل' رو ارسال کنید ", reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton("tokens 🎞", callback_data=f"tokensPage_1_{msg.from_user.id}"),
                     InlineKeyboardButton("close", callback_data="close")
                 ))
             
@@ -81,10 +80,12 @@ async def onMessages(msg: Message):
                 ))
 
     if msg.text == "پنل":
-        await bot.reply_to(msg, "[ 🍧 ] - پنل با موفقیت باز شد", reply_markup=InlineKeyboardMarkup().add(
-            InlineKeyboardButton("شماره ها", "tokensPage"),
-            InlineKeyboardButton("بستن", "close")
-        ))
+        mark = InlineKeyboardMarkup()
+        mark.add(InlineKeyboardButton("شماره ها", callback_data=f"tokensPage_1_{msg.from_user.id}"))
+        mark.add(
+            InlineKeyboardButton("بستن", callback_data="close")
+        )
+        await bot.reply_to(msg, "[ 🍧 ] - پنل با موفقیت باز شد", reply_markup=mark)
 
     elif msg.text.startswith("لاگ"):
         if inc.phone == "":
