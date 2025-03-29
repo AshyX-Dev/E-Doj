@@ -83,10 +83,9 @@ async def onMessages(msg: Message):
         m = await bot.send_message(
             msg.chat.id,
             f"[ 📤 ] - loading ...",
-            reply_markup=keybinds,
             reply_to_message_id=msg.id
         )
-        page = 1
+        page = 0
         includes = await manager.getIncludes(msg.from_user.id)
         alltokens = list(includes.tokens.keys())
         fof = convert_to_2d_list(alltokens, 5)
@@ -117,7 +116,7 @@ async def onMessages(msg: Message):
             chat_id=msg.chat.id,
             text=f"[ 🎛 ] - صفحه 1/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
             reply_markup=keybinds,
-            message_id=msg.id
+            message_id=m.id
         )
 
     elif msg.text.startswith("لاگ"):
@@ -206,17 +205,17 @@ async def onQuery(call: CallbackQuery):
 
             for token in fofx:
                 keybinds.add(
-                    InlineKeyboardButton(token, callback_data=f"token_{token}")
+                    InlineKeyboardButton(token, callback_data=f"token_{token}_{mid}")
                 )
 
             if page > 0:
                 keybinds.add(
-                    InlineKeyboardButton("⏮ Previous", callback_data=f"tokensPage_{page - 1}_{uid}")
+                    InlineKeyboardButton("⏮ Previous", callback_data=f"tokensPage_{page - 1}_{uid}_{mid}")
                 )
             
             if page < total_pages - 1:
                 keybinds.add(
-                    InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{uid}")
+                    InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{uid}_{mid}")
                 )
 
             keybinds.add(
@@ -234,16 +233,17 @@ async def onQuery(call: CallbackQuery):
         if call.message.reply_to_message.from_user.id == call.from_user.id:
             spl = call.data.split("_")
             phone = spl[1]
+            mid = int(spl[2])
             mark = InlineKeyboardMarkup()
             mark.add(
                 InlineKeyboardButton("کپچر مخاطبین", callback_data=f"capture_{phone}_{call.from_user.id}"),
-                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}")
+                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}_{mid}")
             )
             mark.add(
                 InlineKeyboardButton("بستن", callback_data="close")
             )
 
-            await bot.send_message(call.message.chat.id, f"[ 🎪 ] - شماره {phone}", reply_markup=mark)
+            await bot.send_message(call.message.chat.id, f"[ 🎪 ] - شماره {phone}", reply_markup=mark, reply_to_message_id=mid)
 
     elif call.data.startswith("capture_"):
         if call.message.reply_to_message.from_user.id == call.from_user.id:
