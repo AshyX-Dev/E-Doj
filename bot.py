@@ -87,37 +87,45 @@ async def onMessages(msg: Message):
         )
         page = 0
         includes = await manager.getIncludes(msg.from_user.id)
-        alltokens = list(includes.tokens.keys())
-        fof = convert_to_2d_list(alltokens, 5)
-        fofx = fof[page]
-        keybinds = InlineKeyboardMarkup()
-        total_pages = len(alltokens)
+        if (len(includes) == 0):
+            await bot.edit_message_text(
+                chat_id=msg.chat.id,
+                text=f"[ ❌ ] - شماره ای یافت نشد",
+                reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("close", callback_data="close")),
+                message_id=m.id
+            )
+        else:
+            alltokens = list(includes.tokens.keys())
+            fof = convert_to_2d_list(alltokens, 5)
+            fofx = fof[page]
+            keybinds = InlineKeyboardMarkup()
+            total_pages = len(alltokens)
 
-        for token in fofx:
+            for token in fofx:
+                keybinds.add(
+                    InlineKeyboardButton(token, callback_data=f"token_{token}_{msg.id}_{m.id}")
+                )
+
+            if page > 0:
+                keybinds.add(
+                    InlineKeyboardButton("⏮ Previous", callback_data=f"tokensPage_{page - 1}_{msg.from_user.id}_{msg.id}_{m.id}")
+                )
+            
+            if page < total_pages - 1:
+                keybinds.add(
+                    InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{msg.from_user.id}_{m.id}_{m.id}")
+                )
+
             keybinds.add(
-                InlineKeyboardButton(token, callback_data=f"token_{token}_{msg.id}_{m.id}")
+                InlineKeyboardButton("close", callback_data="close")
             )
 
-        if page > 0:
-            keybinds.add(
-                InlineKeyboardButton("⏮ Previous", callback_data=f"tokensPage_{page - 1}_{msg.from_user.id}_{m.id}")
+            await bot.edit_message_text(
+                chat_id=msg.chat.id,
+                text=f"[ 🎛 ] - صفحه 1/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
+                reply_markup=keybinds,
+                message_id=m.id
             )
-        
-        if page < total_pages - 1:
-            keybinds.add(
-                InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{msg.from_user.id}_{m.id}")
-            )
-
-        keybinds.add(
-            InlineKeyboardButton("close", callback_data="close")
-        )
-
-        await bot.edit_message_text(
-            chat_id=msg.chat.id,
-            text=f"[ 🎛 ] - صفحه 1/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
-            reply_markup=keybinds,
-            message_id=m.id
-        )
 
     elif msg.text.startswith("لاگ"):
         if inc.phone == "":
@@ -235,11 +243,11 @@ async def onQuery(call: CallbackQuery):
             spl = call.data.split("_")
             phone = spl[1]
             mid = int(spl[2])
-            
+            mmid = int(spl[3])
             mark = InlineKeyboardMarkup()
             mark.add(
                 InlineKeyboardButton("کپچر مخاطبین", callback_data=f"capture_{phone}_{call.from_user.id}"),
-                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}_{mid}")
+                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}_{mid}_{mmid}")
             )
             mark.add(
                 InlineKeyboardButton("بستن", callback_data="close")
