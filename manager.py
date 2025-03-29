@@ -28,18 +28,24 @@ class Manager(object):
                 "exists": True,
                 "phone": dt.get("phone", ""),
                 "codeStep": dt.get("codeStep", False),
-                "proto": dt.get("proto", "")
+                "proto": dt.get("proto", ""),
+                "tokens": dt.get("tokens", {})
             })
         
         return Includes({ "exists": False })
 
     async def clearIncludes(self, uid: int):
-        user = await self.getUser(uid)
-        if user['status'] == "OK":
-            self.dbs.execute("DELETE includes WHERE uid = ?", (uid,))
+        user = await self.getIncludes(uid)
+        if user.exists:
+            inc = {}
+            inc['phone'] = ""
+            inc['codeStep'] = False
+            inc['proto'] = ""
+            inc['tokens'] = user.tokens
+            self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (inc, uid))
             self.dbs.commit()
         
-        return user
+        return { "status": "USER_NOT_FOUND" }
     
     async def add(self, uid: int):
         user = await self.getUser(uid)
@@ -49,7 +55,8 @@ class Manager(object):
         self.dbs.execute("INSERT INTO dusers (uid, includes) VALUES (?, ?)", (uid, json.dumps({
             "phone": "",
             "codeStep": False,
-            "proto": ""
+            "proto": "",
+            "tokens": {}
         })))
         self.dbs.commit()
 
@@ -88,6 +95,20 @@ class Manager(object):
         if user['status'] == "OK":
             dt = json.loads(user['user'][1])
             dt['proto'] = proto
+
+            self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (
+                json.dumps(dt),
+                uid
+            ))
+            self.dbs.commit()
+        
+        return user
+    
+    async def setToken(self, uid: int, phone: str, token: str = ""):
+        user = await self.getUser(uid)
+        if user['status'] == "OK":
+            dt = json.loads(user['user'][1])
+            dt['tokens'][phone] = token
 
             self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (
                 json.dumps(dt),
