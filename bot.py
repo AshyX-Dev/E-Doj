@@ -1,5 +1,6 @@
 token = "7818062489:AAEh3vbk2z212B2Yls-aP6znsu-zcRa6Vc8"
 
+import asyncio
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from manager import Manager
@@ -29,7 +30,7 @@ async def onMessages(msg: Message):
             
             else:
                 dt = datetime.now(timezone("Asia/Tehran"))
-                await manager.setPhone(logFront)
+                await manager.setPhone(msg.from_user.id, logFront)
                 await bot.reply_to(msg, f"[ ✅ ] - شماره تلفن ست شد\n[ ⌛ ] - {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - {logFront}", reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("login ♻", callback_data=f"log_{logFront}")
                 ))
@@ -62,11 +63,14 @@ async def onQuery(call: CallbackQuery):
             except:...
 
     elif call.data.startswith("accecpt"):
-        dt = datetime.now(timezone("Asia/Tehran"))
-        logFront = call.data.split("_")[1]
-        await manager.setPhone(logFront)
-        await bot.edit_message_text(f"[ ✅ ] - شماره تلفن جایگذاری شد\n[ ⌛ ] - {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - {logFront}", reply_markup=InlineKeyboardMarkup().add(
-            InlineKeyboardButton("login ♻", callback_data=f"log_{logFront}")
-        ), chat_id=call.message.chat.id, message_id=call.message.id)
+        if call.message.reply_to_message.from_user.id == call.from_user.id:
+            dt = datetime.now(timezone("Asia/Tehran"))
+            logFront = call.data.split("_")[1]
+            await manager.setPhone(call.message.from_user.id, bot.logFront)
+            await bot.edit_message_text(f"[ ✅ ] - شماره تلفن جایگذاری شد\n[ ⌛ ] - {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - {logFront}", reply_markup=InlineKeyboardMarkup().add(
+                InlineKeyboardButton("login ♻", callback_data=f"log_{logFront}")
+            ), chat_id=call.message.chat.id, message_id=call.message.id)
 
     elif call.data.startswith("log_"):...
+
+asyncio.run(bot.polling())

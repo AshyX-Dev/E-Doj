@@ -9,7 +9,7 @@ class Manager(object):
 
     def setup(self):
         self.dbs.execute(
-            """CREATE TABLE IF NOT EXISTS dusers ( uid INTEGER PRIMARY TEXT, includes TEXT )"""
+            """CREATE TABLE IF NOT EXISTS dusers ( uid INTEGER PRIMARY KEY, includes TEXT )"""
         )
 
     async def getUser(self, uid: int):
