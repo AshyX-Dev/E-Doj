@@ -42,7 +42,7 @@ class Manager(object):
             inc['codeStep'] = False
             inc['proto'] = ""
             inc['tokens'] = user.tokens
-            self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (inc, uid))
+            self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (json.dumps(inc), uid))
             self.dbs.commit()
         
         return { "status": "USER_NOT_FOUND" }

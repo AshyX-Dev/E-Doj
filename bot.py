@@ -70,14 +70,14 @@ async def onMessages(msg: Message):
                 await manager.setToken(msg.from_user.id, inc.phone, acctoken)
                 await manager.clearIncludes(msg.from_user.id)
                 await bot.reply_to(msg, "[ 🍡 ] - توکن با موفقیت به لیست اد شد !", reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton("tokens 🎞", f"tokensPage_1_{msg.from_user.id}"),
-                    InlineKeyboardButton("close", "close")
+                    InlineKeyboardButton("tokens 🎞", callback_data=f"tokensPage_1_{msg.from_user.id}"),
+                    InlineKeyboardButton("close", callback_data="close")
                 ))
             
             else: 
                 await manager.clearIncludes(msg.from_user.id)
                 await bot.reply_to(msg, "[ ❌ ] - خطا در لاگین ! دوباره سعی کنید", reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton("close", "close")
+                    InlineKeyboardButton("close", callback_data="close")
                 ))
 
     if msg.text.startswith("لاگ"):
@@ -190,11 +190,11 @@ async def onQuery(call: CallbackQuery):
             phone = spl[1]
             mark = InlineKeyboardMarkup()
             mark.add(
-                InlineKeyboardButton("کپچر مخاطبین", f"capture_{phone}_{call.from_user.id}"),
-                InlineKeyboardButton("⏮ بازگشت", f"tokensPage_1_{call.from_user.id}")
+                InlineKeyboardButton("کپچر مخاطبین", callback_data=f"capture_{phone}_{call.from_user.id}"),
+                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}")
             )
             mark.add(
-                InlineKeyboardButton("بستن", "close")
+                InlineKeyboardButton("بستن", callback_data="close")
             )
 
             await bot.send_message(call.message.chat.id, f"[ 🎪 ] - شماره {phone}", reply_markup=mark)
