@@ -3,3 +3,4 @@ class Includes(object):
         self.exists: bool = res.get("exists", False)
         self.phone: str = res.get("phone", "")
         self.codeStep: bool = res.get("codeStep", False)
+        self.proto: str = res.get("proto", "")

@@ -47,7 +47,8 @@ class Manager(object):
         
         self.dbs.execute("INSERT INTO dusers (uid, includes) VALUES (?, ?)", (uid, json.dumps({
             "phone": "",
-            "codeStep": False
+            "codeStep": False,
+            "proto": ""
         })))
         self.dbs.commit()
 
@@ -72,6 +73,20 @@ class Manager(object):
         if user['status'] == "OK":
             dt = json.loads(user['user'][1])
             dt['phone'] = phone
+
+            self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (
+                json.dumps(dt),
+                uid
+            ))
+            self.dbs.commit()
+        
+        return user
+    
+    async def setProto(self, uid: int, proto: str):
+        user = await self.getUser(uid)
+        if user['status'] == "OK":
+            dt = json.loads(user['user'][1])
+            dt['proto'] = proto
 
             self.dbs.execute("UPDATE dusers SET includes = ? WHERE uid = ?", (
                 json.dumps(dt),

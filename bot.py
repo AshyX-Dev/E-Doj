@@ -5,7 +5,7 @@ import requests
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from manager import Manager
-from balechecker.grpcp import ProtobufEncoder
+from balechecker.grpcp import ProtobufEncoder, ProtobufParser
 from datetime import datetime
 from pytz import timezone
 
@@ -51,9 +51,15 @@ async def onMessages(msg: Message):
     inc = await manager.getIncludes(msg.from_user.id)
     if inc.codeStep:
         if msg.text.isdigit():
+            auth = msg.text
+            response_decode = decode_proto(inc.proto)
+            result = response_decode['1:2']
             verify_encode = encode_proto({'1:2': f'{result}', '2:2': f'{auth}', '3:2': {'1:0': 1}})
             try:
                 sendcode = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/ValidateCode', data=verify_encode, headers=request_headers)
+                print(sendcode.text)
+                print()
+                print(sendcode.json())
             except:
                 pass
 
@@ -119,9 +125,9 @@ async def onQuery(call: CallbackQuery):
             grcpencode = encode_proto({'1:0': int(logFront), '2:0': 4, '3:2': 'C28D46DC4C3A7A26564BFCC48B929086A95C93C98E789A19847BEE8627DE4E7D', '4:2': 'Chrome, Windows', '5:2': 'Chrome, Windows'})
             loginn = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/StartPhoneAuth', data=grcpencode, headers=request_headers)
             if loginn.status_code == 200:
-                print(decode_proto(loginn.text))
+                await manager.setPhone(loginn.text)
                 await manager.makeCodeStep(call.from_user.id, True)
-                await bot.edit_message_text("[ 🌮 ] - کد به شماره ارسال شد, کد رو ارسال کنید !")
+                await bot.edit_message_text("[ 🌮 ] - کد به شماره ارسال شد, کد رو ارسال کنید !", chat_id=call.message.chat.id, message_id=call.message.id)
             
             else:
                 await bot.edit_message_text("[ 🛰 ] - ارور HTTP, مشکل رو با ادمین های ربات به اشتراک بگذارید", reply_markup=InlineKeyboardMarkup().add(
