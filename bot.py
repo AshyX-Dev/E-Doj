@@ -95,7 +95,7 @@ async def onMessages(msg: Message):
 
         for token in fofx:
             keybinds.add(
-                InlineKeyboardButton(token, callback_data=f"token_{token}")
+                InlineKeyboardButton(token, callback_data=f"token_{token}_{msg.id}_{m.id}")
             )
 
         if page > 0:
@@ -192,10 +192,11 @@ async def onQuery(call: CallbackQuery):
 
     elif call.data.startswith("tokensPage"):
         if call.message.reply_to_message.from_user.id == call.from_user.id:
-            spl = call.text.split("_")
+            spl = call.data.split("_")
             page = int(spl[1])-1
             uid = int(spl[2])
             mid = int(spl[3])
+            mmid = int(spl[4])
             includes = await manager.getIncludes(call.from_user.id)
             alltokens = list(includes.tokens.keys())
             fof = convert_to_2d_list(alltokens, 5)
@@ -205,7 +206,7 @@ async def onQuery(call: CallbackQuery):
 
             for token in fofx:
                 keybinds.add(
-                    InlineKeyboardButton(token, callback_data=f"token_{token}_{mid}")
+                    InlineKeyboardButton(token, callback_data=f"token_{token}_{mid}_{mmid}")
                 )
 
             if page > 0:
@@ -223,8 +224,8 @@ async def onQuery(call: CallbackQuery):
             )
 
             await bot.edit_message_text(
-                call.chat.id,
-                f"[ 🎛 ] - صفحه {page+1}/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
+                chat_id=call.message.chat.id,
+                text=f"[ 🎛 ] - صفحه {page+1}/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
                 reply_markup=keybinds,
                 message_id=mid
             )
@@ -234,6 +235,7 @@ async def onQuery(call: CallbackQuery):
             spl = call.data.split("_")
             phone = spl[1]
             mid = int(spl[2])
+            
             mark = InlineKeyboardMarkup()
             mark.add(
                 InlineKeyboardButton("کپچر مخاطبین", callback_data=f"capture_{phone}_{call.from_user.id}"),
