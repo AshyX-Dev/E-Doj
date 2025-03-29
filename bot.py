@@ -33,6 +33,35 @@ request_headers = {
     'x-user-agent': 'grpc-web-javascript/0.1',
 }
 
+def perform_headers(token, path):
+    perform_header = {
+
+    'authority': 'next-ws.bale.ai',
+    'method': 'POST',
+    'scheme': 'https',
+    'path': f'{path}',
+    'accept': 'application/grpc-web-text',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'cache-control': 'no-cache',
+    'content-length': '36',
+    'content-type': 'application/grpc-web-text',
+    'cookie': f'access_token={token};',
+    'origin': 'https://web.bale.ai',
+    'sec-ch-ua': '"Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': "Windows",
+    'ec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'user-agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+    'x-grpc-web': '1',
+    'x-user-agent': 'grpc-web-javascript/0.1',
+
+    }
+
+    return perform_header
+
 def decode_proto(string):
     parser = ProtobufParser(string)
     grpc = parser.parse_grpc()
@@ -87,7 +116,7 @@ async def onMessages(msg: Message):
         )
         page = 0
         includes = await manager.getIncludes(msg.from_user.id)
-        if (len(includes) == 0):
+        if (len(includes.tokens) == 0):
             await bot.edit_message_text(
                 chat_id=msg.chat.id,
                 text=f"[ ❌ ] - شماره ای یافت نشد",
@@ -247,7 +276,6 @@ async def onQuery(call: CallbackQuery):
             mark = InlineKeyboardMarkup()
             mark.add(
                 InlineKeyboardButton("کپچر مخاطبین", callback_data=f"capture_{phone}_{call.from_user.id}"),
-                InlineKeyboardButton("⏮ بازگشت", callback_data=f"tokensPage_1_{call.from_user.id}_{mid}_{mmid}")
             )
             mark.add(
                 InlineKeyboardButton("بستن", callback_data="close")
@@ -259,9 +287,17 @@ async def onQuery(call: CallbackQuery):
         if call.message.reply_to_message.from_user.id == call.from_user.id:
             spl = call.data.split("_")
             phone = spl[1]
+            rph = phone.replace("09", "989")
             user = int(spl[2])
             inc = await manager.getIncludes(call.from_user.id)
-
-            print("CAPPTITTUTUTU") # Capturing 
+            #Search Contact 
+            grcpencode = encode_proto({'1:2': f'{rph}'})
+            try:
+                importco = requests.post('https://next-ws.bale.ai/bale.users.v1.Users/SearchContacts', data=grcpencode, headers=perform_headers(inc.tokens[phone], '/bale.users.v1.Users/SearchContacts'))
+                importco_response = decode_proto(importco.text) #response import contact
+                if "2:2" in importco_response:
+                    print(importco_response)
+            except:
+                print('cnnection error.')
 
 asyncio.run(bot.polling())
