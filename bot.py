@@ -1,6 +1,7 @@
 token = "7818062489:AAEh3vbk2z212B2Yls-aP6znsu-zcRa6Vc8"
 
 import asyncio
+import json
 import requests
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -79,7 +80,7 @@ async def onMessages(msg: Message):
             else:
                 dt = datetime.now(timezone("Asia/Tehran"))
                 await manager.setPhone(msg.from_user.id, logFront)
-                await bot.reply_to(msg, f"[ ✅ ] - شماره تلفن ست شد\n[ ⌛ ] - در {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - {logFront}", reply_markup=InlineKeyboardMarkup().add(
+                await bot.reply_to(msg, f"[ ✅ ] - شماره تلفن ست شد\n[ ⌛ ] - در {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - تلفن {logFront}", reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("login ♻", callback_data=f"log_{logFront}")
                 ))
         
@@ -125,13 +126,13 @@ async def onQuery(call: CallbackQuery):
             grcpencode = encode_proto({'1:0': int(logFront), '2:0': 4, '3:2': 'C28D46DC4C3A7A26564BFCC48B929086A95C93C98E789A19847BEE8627DE4E7D', '4:2': 'Chrome, Windows', '5:2': 'Chrome, Windows'})
             loginn = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/StartPhoneAuth', data=grcpencode, headers=request_headers)
             if loginn.status_code == 200:
-                await manager.setPhone(loginn.text)
+                await manager.setProto(call.from_user.id, json.loads(loginn.text))
                 await manager.makeCodeStep(call.from_user.id, True)
                 await bot.edit_message_text("[ 🌮 ] - کد به شماره ارسال شد, کد رو ارسال کنید !", chat_id=call.message.chat.id, message_id=call.message.id)
             
             else:
                 await bot.edit_message_text("[ 🛰 ] - ارور HTTP, مشکل رو با ادمین های ربات به اشتراک بگذارید", reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("close", callback_data="close")
-                ))
+                ), chat_id=call.message.chat.id, message_id=call.message.id)
 
 asyncio.run(bot.polling())
