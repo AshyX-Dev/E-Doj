@@ -63,6 +63,7 @@ class Manager(object):
                 json.dumps(dt),
                 uid
             ))
+            self.dbs.commit()
         
         return user
     
@@ -76,6 +77,7 @@ class Manager(object):
                 json.dumps(dt),
                 uid
             ))
+            self.dbs.commit()
         
         return user
     
