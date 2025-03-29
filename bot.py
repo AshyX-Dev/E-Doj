@@ -32,6 +32,12 @@ request_headers = {
     'x-user-agent': 'grpc-web-javascript/0.1',
 }
 
+def decode_proto(string):
+    parser = ProtobufParser(string)
+    grpc = parser.parse_grpc()
+    for msg in grpc['msgs']:
+        return msg
+
 def encode_proto(json_d):
     grpc_encode_base = {'trailer': '', 'msgs': []}
     grpc_encode_base['msgs'].append(json_d)
@@ -42,9 +48,16 @@ def encode_proto(json_d):
 @bot.message_handler(content_types=['text'], chat_types=['private', 'supergroup'])
 async def onMessages(msg: Message):
     await manager.validate(msg.from_user.id)
+    inc = await manager.getIncludes(msg.from_user.id)
+    if inc.codeStep:
+        if msg.text.isdigit():
+            verify_encode = encode_proto({'1:2': f'{result}', '2:2': f'{auth}', '3:2': {'1:0': 1}})
+            try:
+                sendcode = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/ValidateCode', data=verify_encode, headers=request_headers)
+            except:
+                pass
 
     if msg.text.startswith("لاگ"):
-        inc = await manager.getIncludes(msg.from_user.id)
         if inc.phone == "":
             logFront = msg.text[3:].strip()
             if logFront == "":
@@ -96,13 +109,23 @@ async def onQuery(call: CallbackQuery):
             dt = datetime.now(timezone("Asia/Tehran"))
             logFront = call.data.split("_")[1]
             await manager.setPhone(call.message.from_user.id, logFront)
-            await bot.edit_message_text(f"[ ✅ ] - شماره تلفن جایگذاری شد\n[ ⌛ ] - در {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - {logFront}", reply_markup=InlineKeyboardMarkup().add(
+            await bot.edit_message_text(f"[ ✅ ] - شماره تلفن جایگذاری شد\n[ ⌛ ] - در {dt.strftime("%Y/%m/%d ● %H:%M:%S")}\n[ 💎 ] - تلفن {logFront}", reply_markup=InlineKeyboardMarkup().add(
                 InlineKeyboardButton("login ♻", callback_data=f"log_{logFront}")
             ), chat_id=call.message.chat.id, message_id=call.message.id)
 
     elif call.data.startswith("log_"):
-        logFront = call.data.split("_")[1]
-        grcpencode = encode_proto({'1:0': int(logFront), '2:0': 4, '3:2': 'C28D46DC4C3A7A26564BFCC48B929086A95C93C98E789A19847BEE8627DE4E7D', '4:2': 'Chrome, Windows', '5:2': 'Chrome, Windows'})
-        loginn = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/StartPhoneAuth', data=grcpencode, headers=request_headers)
+        if call.message.reply_to_message.from_user.id == call.from_user.id:
+            logFront = call.data.split("_")[1]
+            grcpencode = encode_proto({'1:0': int(logFront), '2:0': 4, '3:2': 'C28D46DC4C3A7A26564BFCC48B929086A95C93C98E789A19847BEE8627DE4E7D', '4:2': 'Chrome, Windows', '5:2': 'Chrome, Windows'})
+            loginn = requests.post('https://next-ws.bale.ai/bale.auth.v1.Auth/StartPhoneAuth', data=grcpencode, headers=request_headers)
+            if loginn.status_code == 200:
+                print(decode_proto(loginn.text))
+                await manager.makeCodeStep(call.from_user.id, True)
+                await bot.edit_message_text("[ 🌮 ] - کد به شماره ارسال شد, کد رو ارسال کنید !")
+            
+            else:
+                await bot.edit_message_text("[ 🛰 ] - ارور HTTP, مشکل رو با ادمین های ربات به اشتراک بگذارید", reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("close", callback_data="close")
+                ))
 
 asyncio.run(bot.polling())
