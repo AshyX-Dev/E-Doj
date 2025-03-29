@@ -69,7 +69,7 @@ async def onMessages(msg: Message):
                 acctoken = res_decode['4:2']['1:2']
                 await manager.setToken(msg.from_user.id, inc.phone, acctoken)
                 await manager.clearIncludes(msg.from_user.id)
-                await bot.reply_to(msg, "[ 🍡 ] - توکن با موفقیت به لیست اد شد !", reply_markup=InlineKeyboardMarkup().add(
+                await bot.reply_to(msg, "[ 🍡 ] - توکن با موفقیت به لیست اد شد !\n[ ♦ ] - برای دیدن شماره ها کلمه 'پنل' رو ارسال کنید ", reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("tokens 🎞", callback_data=f"tokensPage_1_{msg.from_user.id}"),
                     InlineKeyboardButton("close", callback_data="close")
                 ))
@@ -80,7 +80,13 @@ async def onMessages(msg: Message):
                     InlineKeyboardButton("close", callback_data="close")
                 ))
 
-    if msg.text.startswith("لاگ"):
+    if msg.text == "پنل":
+        await bot.reply_to(msg, "[ 🍧 ] - پنل با موفقیت باز شد", reply_markup=InlineKeyboardMarkup().add(
+            InlineKeyboardButton("شماره ها", "tokensPage"),
+            InlineKeyboardButton("بستن", "close")
+        ))
+
+    elif msg.text.startswith("لاگ"):
         if inc.phone == "":
             logFront = msg.text[3:].strip()
             if logFront == "":
@@ -154,14 +160,14 @@ async def onQuery(call: CallbackQuery):
     elif call.data.startswith("tokensPage"):
         if call.message.reply_to_message.from_user.id == call.from_user.id:
             spl = call.data.split("_")
-            page = int(spl[1])
+            page = int(spl[1])-1
             uid = int(spl[2])
             includes = await manager.getIncludes(call.from_user.id)
-            alltokens = includes.tokens.keys()
-            fof = convert_to_2d_list(alltokens)
+            alltokens = list(includes.tokens.keys())
+            fof = convert_to_2d_list(alltokens, 5)
             fofx = fof[page]
             keybinds = InlineKeyboardMarkup()
-            total_pages = (len(alltokens) + 5 - 1)
+            total_pages = len(alltokens)
 
             for token in fofx:
                 keybinds.add(
@@ -178,10 +184,15 @@ async def onQuery(call: CallbackQuery):
                     InlineKeyboardButton("Next ⏭", callback_data=f"tokensPage{page + 1}_{uid}")
                 )
 
+            keybinds.add(
+                InlineKeyboardButton("close", callback_data="close")
+            )
+
             await bot.send_message(
                 call.message.chat.id,
                 f"[ 🎛 ] - صفحه {page+1}/{len(fof)}\n[ 🚩 ] - شماره رو انتخاب کنید",
-                reply_markup=keybinds
+                reply_markup=keybinds,
+                reply_to_message_id=call.message.from_user.id
             )
     
     elif call.data.startswith("token_"):
