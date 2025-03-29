@@ -27,7 +27,8 @@ class Manager(object):
             return Includes({
                 "exists": True,
                 "phone": dt.get("phone", ""),
-                "codeStep": dt.get("codeStep", False)
+                "codeStep": dt.get("codeStep", False),
+                "proto": dt.get("proto", "")
             })
         
         return Includes({ "exists": False })
