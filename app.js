@@ -40,8 +40,9 @@ bot.on("message", async (msg) => {
                 if (user.user.language === "eng" || user.user.language === "fa" || user.user.language === undefined){
                     await bot.sendMessage(
                         msg.chat.id,
-                        makeFont("[ 🌐 ] - dont make me sad ") + `[ʙɪᴛᴄʜ](tg://openmessage?user_id=${msg.from.id})` + makeNumberFont(`\n[ ⌛ ] - ${date.getFullYear()}/${date.getMonth()}/${date.getDay()} - ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`) + makeFont("\n\n[ 🎛 ] - Panel is here"),
+                        makeFont("[ 🌐 ] - dont make me sad ") + `<a href="tg://openmessage?user_id=${msg.from.id}">ʙɪᴛᴄʜ</a>` + makeNumberFont(`\n[ ⌛ ] - ${date.getFullYear()}/${date.getMonth()}/${date.getDay()} - ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`) + makeFont("\n\n[ 🎛 ] - Panel is here"),
                         {
+                            parse_mode: "HTML",
                             reply_to_message_id: msg.message_id,
                             reply_markup: {
                                 inline_keyboard: [
